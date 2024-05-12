@@ -1,0 +1,247 @@
+Crie até 127 discos que não sejam de inicialização no momento em que criar uma VM usando a propriedade initializeParams para cada disco extra. Crie discos extras com uma imagem pública ou privada. Para adicionar um disco vazio, defina a entrada initializeParams sem o valor sourceImage. Inclua a propriedade de disco replicaZones para criar discos permanentes regionais.
+
+
+
+POST https://compute.googleapis.com/compute/v1/projects/PROJECT_ID/zones/ZONE/instances
+
+{
+   "machineType":"zones/MACHINE_TYPE_ZONE/machineTypes/MACHINE_TYPE",
+   "name":"VM_NAME",
+
+   "disks":[
+      {
+         "initializeParams":{
+            "sourceImage":"projects/IMAGE_PROJECT/global/images/IMAGE"
+         },
+         "boot":true
+      },
+      {
+         "initializeParams":{
+            "diskSizeGb":"SIZE_GB",
+            "sourceImage":"projects/DISK_IMAGE_PROJECT/global/images/DISK_IMAGE",
+            "diskType":"DISK_TYPE"
+         }
+      },
+      {
+         "initializeParams":{
+            "diskSizeGb":"SIZE_GB",
+            "diskType":"DISK_TYPE"
+         },
+      },
+      {
+         "boot": false,
+         "deviceName":"DISK_NAME",
+         "initializeParams": {
+            "diskType": "DISK_TYPE",
+            "replicaZones": [
+               "projects/PROJECT_ID/zones/ZONE",
+               "projects/PROJECT_ID/zones/REMOTE_ZONE"
+            ]
+         }
+      }
+   ],
+
+   "networkInterfaces":[
+      {
+         "network":"global/networks/NETWORK_NAME"
+      }
+   ],
+
+   "shieldedInstanceConfig":{
+      "enableSecureBoot":"ENABLE_SECURE_BOOT"
+   }
+}
+Substitua:
+
+PROJECT_ID: ID do projeto em que a VM será criada
+ZONE: zona em que a VM será criada
+MACHINE_TYPE_ZONE: a zona que contém o tipo de máquina que será usado para a nova VM.
+MACHINE_TYPE: tipo de máquina, predefinida ou personalizada, para a nova VM.
+VM_NAME: nome da nova VM.
+IMAGE_PROJECT: o projeto que contém a imagem
+Por exemplo, se você especificar debian-10 como a família de imagens, especifique debian-cloud como projeto de imagem.
+IMAGE or IMAGE_FAMILY: Especifique uma destas opções:
+IMAGE: uma versão específica de uma imagem pública.
+Por exemplo, "sourceImage": "projects/debian-cloud/global/images/debian-10-buster-v20200309"
+IMAGE_FAMILY: uma família de imagens
+Isso cria a VM a partir da imagem do SO mais recente e não descontinuada. Por exemplo, se você especificar "sourceImage": "projects/debian-cloud/global/images/family/debian-10", o Compute Engine criará uma VM usando a versão mais recente da imagem do SO na família de imagens Debian 10.
+Nos discos extras, substitua:
+SIZE_GB: tamanho do disco;
+DISK_IMAGE ou
+DISK_IMAGE_FAMILY: especifique uma imagem de origem ou família de imagens para o disco que não é de inicialização:
+DISK_IMAGE: nome da imagem que você quer usar como um disco que não é de inicialização Por exemplo, "sourceImage": "projects/DISK_IMAGE_PROJECT/global/images/DISK_IMAGE".
+DISK_IMAGE_FAMILY: uma família de imagens a ser usada como um disco que não é de inicialização. Por exemplo, "sourceImage": "projects/DISK_IMAGE_PROJECT/global/images/family/DISK_IMAGE_FAMILY".
+DISK_TYPE: URL completo ou parcial do tipo do disco permanente. Por exemplo, https://www.googleapis.com/compute/v1/projects/PROJECT_ID/zones/ZONE/diskTypes/pd-ssd.
+DISK_NAME: opcional. O nome do disco exibido para o SO convidado após a criação da VM.
+REMOTE_ZONE: a zona em que o disco regional será replicado.
+Para discos vazios, não especifique a propriedade sourceImage. Para discos vazios, não especifique a propriedade replicaZones.
+NETWORK_NAME: a rede VPC que você quer usar para a VM. Você pode especificar default para usar sua rede padrão.
+ENABLE_SECURE_BOOT: opcional: se você escolher uma imagem compatível com recursos da VM protegida, o Compute Engine ativa, por padrão, o módulo de plataforma virtual confiável (vTPM) e o monitoramento de integridade. Por padrão, o Compute Engine não ativa a Inicialização segura.
+
+true Se você especificar enableSecureBoot para , o Compute Engine criará uma VM com todos os três recursos da VM protegida já ativados. Depois que o Compute Engine iniciar a VM, será preciso interrompê-la se você quiser modificar as opções de VM protegida.
+
+Formate e ative os discos antes de usá-los.
+
+Criar uma instância de VM a partir de uma imagem compartilhada
+Se outro usuário tiver compartilhado uma imagem com você, será possível usá-la para criar uma VM.
+
+Console
+gcloud
+Terraform
+REST
+No console do Google Cloud, acesse a página Criar uma instância.
+
+Acesse "Criar uma instância"
+
+Especifique um Nome para sua VM. Veja mais informações em Convenção de nomenclatura de recursos.
+Opcional: altere a zona desta VM. O Compute Engine seleciona, aleatoriamente, a lista de zonas dentro de cada região para incentivar o uso em várias zonas.
+Selecione uma Configuração de máquina para sua VM.
+Na seção Disco de inicialização, clique em Alterar para configurar o disco de inicialização. Depois faça o seguinte:
+Selecione a guia Imagens personalizadas.
+Para selecionar o projeto de imagem, clique em Selecionar um projeto e faça o seguinte:
+Selecione o projeto que contém a imagem.
+Clique em Abrir.
+Na lista Imagem, clique na imagem que você quer importar.
+Selecione o tipo e o tamanho do seu disco de inicialização.
+Para confirmar as opções do disco de inicialização, clique em Selecionar.
+Para permitir o tráfego HTTP ou HTTPS para a VM, na seção Firewall, selecione Permitir tráfego HTTP ou Permitir tráfego HTTPS.
+
+O console do Google Cloud adiciona uma tag de rede à VM e cria a regra de firewall de entrada correspondente que permite todo o tráfego de entrada em tcp:80 (HTTP) ou tcp:443 (HTTPS). A tag de rede associa a regra de firewall à VM. Para mais informações, consulte Visão geral das regras de firewall na documentação do Cloud Next Generation Firewall.
+
+Para iniciar e criar uma VM, clique em Criar.
+Criar uma VM a partir de um snapshot
+É possível criar uma nova VM a partir de um snapshot das seguintes maneiras:
+
+Como restaurar um disco de inicialização de VM: se você fez backup do disco de inicialização de uma VM com um snapshot, use-o para criar uma nova VM. Para mais instruções, consulte Como restaurar um snapshot de disco de inicialização para uma nova VM.
+
+Restaurar um disco que não é de inicialização: se você fez backup de um disco que não é de inicialização com um snapshot, poderá restaurá-lo para um novo disco que não seja de inicialização ao criar uma VM. Para instruções, consulte Como criar uma VM com um disco que não é de inicialização com base em um snapshot.
+
+Para gerar rapidamente mais de uma VM com o mesmo disco de inicialização, crie uma imagem personalizada e crie VMs a partir dessa imagem em vez de usar um snapshot.
+
+Criar uma instância de VM a partir de uma imagem de contêiner
+Para implantar e iniciar um contêiner em uma VM do Compute Engine, especifique o nome de uma imagem de contêiner e os parâmetros de configuração opcionais ao criar a VM. O Compute Engine cria a VM usando a versão mais recente da imagem pública do sistema operacional otimizado para contêiner, que tem o Docker instalado. Em seguida, o Compute Engine lança o contêiner quando a VM é iniciada. Para mais informações, consulte Como implantar contêineres em VMs.
+
+Para criar uma VM usando uma imagem de contêiner, use o console do Google Cloud ou gcloud.
+
+Console
+gcloud
+No console do Google Cloud, acesse a página Instâncias de VMs.
+
+Acessar instâncias de VM
+
+Selecione o projeto e clique em Continuar.
+
+Clique em Criar instância.
+
+Especifique um Nome para sua VM. Saiba mais em Convenção de nomenclatura de recursos.
+
+Na seção Contêiner, clique em Implantar contêiner.
+
+Especifique a Imagem do contêiner para usar. Exemplo:
+
+Para selecionar uma imagem de contêiner NGINX 1.12 no Cloud Launcher:
+
+gcr.io/cloud-marketplace/google/nginx1:1.12
+
+Para implantar uma imagem de contêiner Apache do Docker Hub, sempre especifique o nome completo da imagem do Docker:
+
+docker.io/httpd:2.4
+
+Opcional: clique em Opções de contêiner avançadas. Para obter mais informações, consulte Como configurar opções para executar seu contêiner.
+
+Para criar a VM, inicializá-la e iniciar o contêiner, clique em Criar.
+
+Criar uma instância de VM em uma sub-rede específica
+Por padrão, o Google Cloud cria uma rede VPC de modo automático chamada default para cada projeto. Especifique a sub-rede ao criar a VM para usar uma rede diferente ou uma sub-rede criada manualmente em uma rede VPC de modo automático ou personalizado.
+
+Ao criar uma VM em uma sub-rede, considere estas regras:
+
+Se você não especificar uma rede ou sub-rede, o Compute Engine usará a rede VPC padrão e a sub-rede automática que estiver na mesma região da VM.
+Se você não especificar uma rede, o Compute Engine inferirá a rede pela sub-rede especificada.
+Se você especificar uma rede, especifique uma sub-rede que pertença à mesma rede. Caso contrário, a criação da VM falhará.
+Observação: crie a sub-rede que você quer usar antes de criar a VM. Para mais informações, consulte Criar e gerenciar redes VPC.
+Console
+gcloud
+Terraform
+Go
+Java
+Node.js
+Python
+REST
+Siga as instruções da API para criar uma VM a partir de uma imagem ou um snapshot, mas especifique o campo subnet no corpo da solicitação. Para adicionar discos vazios, não adicione uma imagem de origem. Opcionalmente, é possível especificar as propriedades diskSizeGb, diskType e labels.
+
+
+
+POST https://compute.googleapis.com/compute/v1/projects/PROJECT_ID/zones/ZONE/instances
+
+{
+   "machineType":"zones/MACHINE_TYPE_ZONE/machineTypes/MACHINE_TYPE",
+   "name":"VM_NAME",
+
+   "disks":[
+      {
+         "initializeParams":{
+            "sourceImage":"projects/IMAGE_PROJECT/global/images/IMAGE"
+         },
+         "boot":true
+      }
+   ],
+
+   "networkInterfaces":[
+      {
+         "network":"global/networks/NETWORK_NAME",
+         "subnetwork":"regions/REGION/subnetworks/SUBNET_NAME",
+         "accessConfigs":{
+            "name":"External NAT",
+            "type":"ONE_TO_ONE_NAT"
+         }
+      }
+   ],
+
+   "shieldedInstanceConfig":{
+      "enableSecureBoot":"ENABLE_SECURE_BOOT"
+   }
+}
+Substitua:
+
+PROJECT_ID: ID do projeto em que a VM será criada
+ZONE: zona em que a VM será criada
+MACHINE_TYPE_ZONE: a zona que contém o tipo de máquina que será usado para a nova VM.
+MACHINE_TYPE: tipo de máquina, predefinida ou personalizada, para a nova VM.
+VM_NAME: nome da nova VM.
+IMAGE_PROJECT: o projeto que contém a imagem
+Por exemplo, se você especificar debian-10 como a família de imagens, especifique debian-cloud como projeto de imagem.
+IMAGE or IMAGE_FAMILY: Especifique uma destas opções:
+IMAGE: uma versão específica de uma imagem pública.
+Por exemplo, "sourceImage": "projects/debian-cloud/global/images/debian-10-buster-v20200309"
+IMAGE_FAMILY: uma família de imagens
+Isso cria a VM a partir da imagem do SO mais recente e não descontinuada. Por exemplo, se você especificar "sourceImage": "projects/debian-cloud/global/images/family/debian-10", o Compute Engine criará uma VM usando a versão mais recente da imagem do SO na família de imagens Debian 10.
+NETWORK_NAME: a rede VPC que você quer usar para a VM. Você pode especificar default para usar sua rede padrão.
+REGION: região onde a sub-rede especificada existe
+SUBNET_NAME: nome da sub-rede;
+ENABLE_SECURE_BOOT: opcional: se você escolher uma imagem compatível com recursos da VM protegida, o Compute Engine ativa, por padrão, o módulo de plataforma virtual confiável (vTPM) e o monitoramento de integridade. Por padrão, o Compute Engine não ativa a Inicialização segura.
+
+true Se você especificar enableSecureBoot para , o Compute Engine criará uma VM com todos os três recursos da VM protegida já ativados. Depois que o Compute Engine iniciar a VM, será preciso interrompê-la se você quiser modificar as opções de VM protegida.
+
+Criar uma VM configurada para monitoramento e geração de registros do Agente de operações
+O Agente de operações coleta dados de telemetria das VMs que podem ser usados para solução de problemas e ajuste de desempenho. É possível instalar o Agente de operações ao criar uma VM ou em VMs atuais, conforme descrito nos seguintes tópicos:
+
+Instale o Agente de operações ao criar uma VM usando o console do Google Cloud: ative a instalação automática dele selecionando a opção Instalar o Agente de operações para monitoramento e geração de registros na página Criar uma instância. Essa opção ativa o VM Manager no modo de funcionalidade limitada e cria uma atribuição de política de SO para instalar o Agente de operações na VM. Para mais informações, consulte Instalar o Agente de operações durante a criação da VM.
+
+Instale o Agente de operações em VMs atuais: use o console do Google Cloud, a CLI gcloud ou uma ferramenta de automação para instalar o Agente de operações em uma frota de VMs ou em VMs individuais. Para ver instruções, consulte Instalar o Agente de operações.
+
+Observação: se você instalar o Agente de operações, poderá receber cobranças pelas métricas e pelos registros que ele envia ao seu projeto do Google Cloud. Para mais informações, consulte os preços do pacote de operações do Google Cloud.
+Solução de problemas
+Para encontrar métodos para resolver erros comuns de criação de VM, consulte Solução de problemas de criação de VM.
+
+A seguir
+Verifique o status da VM para saber quando ela está pronta para o uso.
+Aprenda a usar snapshots para fazer backup de discos permanentes.
+Saiba mais sobre imagens.
+Saiba mais sobre contêineres.
+Crie e anexe um disco de armazenamento que não seja de inicialização à VM para armazenar os dados separadamente do disco de inicialização.
+Crie e inicie instâncias do Windows Server ou do SQL Server.
+Consulte o comando gcloud compute instances create.
+Conecte-se à instância da VM.
+Faça um teste 
+Se você começou a usar o Google Cloud agora, crie uma conta para avaliar o desempenho do Compute Engine em situações reais. Clientes novos também recebem US$ 300 em créditos para executar, testar e implantar cargas de trabalho.
